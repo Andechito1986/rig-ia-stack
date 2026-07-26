@@ -1,0 +1,18 @@
+# Resultados de benchmark (datos locales de cada rig, no van al repo)
+benchmarks/*.csv
+
+# Logs de instalación y depuración
+*.log
+logs/
+
+# Pesos de modelos (nunca deben entrar en git)
+models/
+*.gguf
+*.bin
+*.safetensors
+
+# Temporales y del sistema
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db

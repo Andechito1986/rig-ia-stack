@@ -1,0 +1,25 @@
+# Open WebUI: interfaz web para Ollama
+# Acceso local:  http://localhost:3000
+# Acceso LAN:    http://172.16.16.70:3000
+#
+# Ollama corre en el anfitrión (fuera de Docker), por eso se usa
+# host.docker.internal con el mapeo host-gateway de Linux.
+
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    ports:
+      - "3000:8080"
+    volumes:
+      - open-webui:/app/backend/data
+    environment:
+      # API de Ollama en el anfitrión (OLLAMA_HOST=0.0.0.0:11434 en systemd)
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+    extra_hosts:
+      # En Linux hace falta este mapeo explícito para resolver host.docker.internal
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  open-webui:
