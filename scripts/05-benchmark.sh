@@ -93,8 +93,20 @@ else
     mapfile -t MODELOS < <(ollama list | awk 'NR>1 {print $1}')
 fi
 
-if [[ "${#MODELOS[@]}" -eq 0 ]]; then
-    log_error "No hay modelos instalados. Ejecuta primero scripts/04-descargar-modelos.sh."
+# Los modelos de embeddings no generan texto (usan /api/embed): excluirlos
+MODELOS_FILTRADOS=()
+for m in "${MODELOS[@]:-}"; do
+    [[ -z "${m}" ]] && continue
+    if [[ "${m}" == *embed* ]]; then
+        log_aviso "${m}: es un modelo de embeddings; no aplica benchmark de generación. Se omite."
+    else
+        MODELOS_FILTRADOS+=("${m}")
+    fi
+done
+MODELOS=("${MODELOS_FILTRADOS[@]:-}")
+
+if [[ "${#MODELOS[@]}" -eq 0 ]] || [[ -z "${MODELOS[0]:-}" ]]; then
+    log_error "No hay modelos de generación instalados. Ejecuta primero scripts/04-descargar-modelos.sh."
     exit 1
 fi
 log_info "Modelos a medir: ${MODELOS[*]}"
