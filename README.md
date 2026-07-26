@@ -61,7 +61,10 @@ Tags verificados contra [ollama.com/library](https://ollama.com/library) (julio 
 ## Instalación paso a paso
 
 ```bash
-git clone <url-del-repo> rig-ia-stack
+# Prerequisitos: git y curl no vienen preinstalados en Ubuntu Desktop
+sudo apt update && sudo apt install -y git curl
+
+git clone https://github.com/Andechito1986/rig-ia-stack.git
 cd rig-ia-stack
 chmod +x setup.sh scripts/*.sh   # por si el bit de ejecución no se preservó
 ./setup.sh
