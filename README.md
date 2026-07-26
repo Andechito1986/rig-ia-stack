@@ -32,7 +32,7 @@ Software que instalan los scripts: Ollama (script oficial), Docker Engine (scrip
 
 ## Los 10 modelos
 
-Tags verificados contra [ollama.com/library](https://ollama.com/library) (junio 2026).
+Tags verificados contra [ollama.com/library](https://ollama.com/library) (julio 2026).
 
 ### Escalera de benchmark (comparable entre GPUs)
 
@@ -40,7 +40,7 @@ Tags verificados contra [ollama.com/library](https://ollama.com/library) (junio 
 |---|---|---|---|---|
 | `qwen3:14b` | 0 | Denso | ~9 GB | Base: cabe entero en los 10 GB de la 3080 |
 | `qwen3:30b` | 25 | MoE (3B activos) | ~19 GB | MoE eficiente, buen tok/s incluso con offload |
-| `qwen3:32b` | 50 | Denso | ~20 GB | Denso grande: fuerza offload CPU en la 3080 |
+| `qwen3.6:27b` | 50 | Denso | ~17 GB | Qwen 3.6 (abr 2026): el mejor denso para hardware de consumo; fuerza offload en la 3080 |
 | `llama3.3:70b` | 100 | Denso | ~43 GB | Estrés: mayoritariamente en CPU/RAM |
 
 > El tier es la puntuación de referencia de la escalera: sirve para construir un índice compuesto al comparar GPUs (p. ej. tok/s normalizados por tier).
@@ -52,7 +52,7 @@ Tags verificados contra [ollama.com/library](https://ollama.com/library) (junio 
 | `gpt-oss:20b` | MoE, MXFP4 | ~14 GB | Daily driver generalista |
 | `qwen3:8b` | Denso | ~5 GB | Respuestas rápidas |
 | `qwen3-coder:30b` | MoE | ~19 GB | Programación |
-| `qwen3-vl:8b` | Denso multimodal | ~6 GB | Visión (imágenes) |
+| `gemma4:e4b` | Multimodal + tool calling | ~6 GB | Visión y base para agentes (Fase 4: OpenClaw) |
 | `deepseek-r1:14b` | Denso | ~9 GB | Razonamiento paso a paso |
 | `nomic-embed-text` | Embeddings | ~274 MB | RAG / búsqueda semántica |
 
@@ -76,6 +76,7 @@ chmod +x setup.sh scripts/*.sh   # por si el bit de ejecución no se preservó
 3. **Instalar Docker + Open WebUI** — Docker con `get.docker.com`, usuario `rig` añadido al grupo `docker`, y `docker compose up -d` con el `docker-compose.yml` del repo.
 4. **Descargar modelos** — submenú: `--minimo`, `--escalera`, `--zoo` o `--todo` (ver siguiente sección).
 5. **Benchmark** — genera un CSV en `benchmarks/` con tok/s por modelo.
+6. **Actualizar modelos** — pone al día todos los tags instalados (descarga delta; ver "Actualizar y rotar modelos").
 
 También se puede ejecutar cada script por separado desde `scripts/`.
 
@@ -90,6 +91,49 @@ También se puede ejecutar cada script por separado desde `scripts/`.
 ```
 
 `llama3.3:70b` (~43 GB) solo se descarga tras confirmación interactiva (o directamente con `--todo`), y siempre que haya ≥ 50 GB libres.
+
+---
+
+## Actualizar y rotar modelos
+
+El rig está diseñado para que los modelos sean **fácilmente reemplazables**: a medida que salgan versiones mejores, puedes actualizar, probar y rotar sin rehacer nada.
+
+### Cómo funcionan las actualizaciones en Ollama
+
+- Un **tag** (p. ej. `qwen3:14b`) apunta siempre a la última *build* publicada por los mantenedores de la librería (mejoras de quant, plantillas de chat, correcciones).
+- `ollama pull <tag>` descarga **solo las capas que cambiaron** (delta): actualizar es rápido y no duplica espacio.
+- Las **nuevas generaciones** (p. ej. un futuro `qwen4`) llegan como tags *nuevos*: se instalan en paralelo con los actuales y conviven sin interferir.
+
+### Actualizar lo instalado (opción 6 del menú)
+
+```bash
+./scripts/06-actualizar-modelos.sh              # todos los modelos instalados
+./scripts/06-actualizar-modelos.sh qwen3:14b    # solo uno
+./scripts/06-actualizar-modelos.sh --ollama     # además, actualiza el motor Ollama
+```
+
+Frecuencia sugerida: 1 vez al mes, o tras ver una novedad en [ollama.com/library?sort=newest](https://ollama.com/library?sort=newest) o en el [blog de Ollama](https://ollama.com/blog).
+
+### Rotar: evaluar un modelo nuevo y jubilar el viejo
+
+Cuando salga algo que prometa (ejemplo: un hipotético `qwen4:14b`):
+
+```bash
+# 1. Instalarlo EN PARALELO (no borra nada)
+ollama pull qwen4:14b
+
+# 2. Comparar rendimiento con el mismo benchmark
+./scripts/05-benchmark.sh qwen3:14b qwen4:14b
+
+# 3. Probar ambos en Open WebUI con tus prompts habituales (dropdown arriba)
+
+# 4. Si el nuevo gana, jubilar el viejo y liberar espacio
+ollama rm qwen3:14b
+```
+
+Para incorporarlo de forma permanente a la escalera o al zoo, edita los arrays `ESCALERA` / `ZOO` de `scripts/04-descargar-modelos.sh` (cada modelo tiene un comentario con su rol y tamaño).
+
+> ⚠️ **Regla de oro de la escalera**: si cambias un modelo de la ESCALERA, repite el benchmark completo y anota el cambio en el nombre del CSV o en un comentario del commit — los CSV históricos solo son comparables mientras la escalera sea la misma.
 
 ---
 
@@ -140,7 +184,7 @@ Cada ejecución crea `benchmarks/benchmark_YYYYMMDD_HHMMSS.csv` con estas column
 Cómo leerlo:
 
 - **El prompt es fijo** (explicar la fotosíntesis en ~200 palabras), así que las cifras son comparables entre fechas y entre GPUs.
-- `tokens_por_segundo` alto = mejor. En la RTX 3080 espera cifras altas en `qwen3:14b`/`qwen3:30b` (MoE) y un desplome en `qwen3:32b` y `llama3.3:70b` por el offload a CPU (solo hay 10 GB de VRAM).
+- `tokens_por_segundo` alto = mejor. En la RTX 3080 espera cifras altas en `qwen3:14b`/`qwen3:30b` (MoE) y un desplome en `qwen3.6:27b` y `llama3.3:70b` por el offload a CPU (solo hay 10 GB de VRAM).
 - **Regla de oro**: tras cada cambio de hardware (nueva GPU, driver, etc.) vuelve a ejecutar el benchmark y conserva los CSV antiguos para comparar. Los CSV están en `.gitignore`: son datos locales de cada rig.
 - Para comparar dos GPUs, compara el `tokens_por_segundo` de cada modelo de la **escalera** (mismos 4 modelos, mismo prompt).
 
@@ -185,7 +229,7 @@ Acabas de ser añadido al grupo `docker`: **cierra y vuelve a abrir la sesión S
 - [ ] **Mover el monitor a los gráficos integrados** (iGPU del 9700X) para liberar la VRAM que consume el escritorio y dejar los 10 GB enteros para inferencia.
 - [ ] **Modo headless total + Tailscale**: quitar el monitor, acceso seguro desde fuera de casa sin abrir puertos en el router.
 - [ ] **Fase 4 — OpenClaw**: desplegar el agente con `ollama launch openclaw` (integración nativa de Ollama) sobre los modelos ya instalados.
-- [ ] **Upgrade de GPU (5070 Ti / 5090)**: al cambiarla, repetir `05-benchmark.sh` con la escalera completa y comparar los CSV contra la 3080 (más VRAM = menos offload = salto grande en `qwen3:32b` y `llama3.3:70b`).
+- [ ] **Upgrade de GPU (5070 Ti / 5090)**: al cambiarla, repetir `05-benchmark.sh` con la escalera completa y comparar los CSV contra la 3080 (más VRAM = menos offload = salto grande en `qwen3.6:27b` y `llama3.3:70b`).
 - [ ] Automatizar benchmarks programados (cron/systemd timer) tras actualizaciones de driver o de Ollama.
 
 ---
@@ -195,7 +239,7 @@ Acabas de ser añadido al grupo `docker`: **cierra y vuelve a abrir la sesión S
 ```
 rig-ia-stack/
 ├── README.md
-├── setup.sh                  # menú maestro interactivo (pasos 1-5)
+├── setup.sh                  # menú maestro interactivo (pasos 1-6)
 ├── docker-compose.yml        # Open WebUI (puerto 3000)
 ├── config/
 │   └── ollama-override.conf  # drop-in systemd: OLLAMA_MODELS y OLLAMA_HOST
@@ -204,7 +248,8 @@ rig-ia-stack/
 │   ├── 02-instalar-ollama.sh
 │   ├── 03-instalar-docker-openwebui.sh
 │   ├── 04-descargar-modelos.sh
-│   └── 05-benchmark.sh
+│   ├── 05-benchmark.sh
+│   └── 06-actualizar-modelos.sh
 └── benchmarks/               # CSV de resultados (ignorados por git)
 ```
 

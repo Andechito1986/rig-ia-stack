@@ -7,6 +7,7 @@
 #   3) Instalación de Docker + despliegue de Open WebUI
 #   4) Descarga de modelos (escalera / zoo / mínimo)
 #   5) Benchmark de generación con salida a CSV
+#   6) Actualización de modelos instalados (delta por tag)
 #
 set -euo pipefail
 
@@ -85,8 +86,8 @@ menu_modelos() {
     echo
     echo "  Descarga de modelos - elige modo:"
     echo "    1) --minimo    (qwen3:14b + gpt-oss:20b + nomic-embed-text)"
-    echo "    2) --escalera  (benchmark entre GPUs: qwen3:14b/30b/32b + llama3.3:70b)"
-    echo "    3) --zoo       (uso diario: gpt-oss, qwen3:8b, coder, vl, deepseek, embeddings)"
+    echo "    2) --escalera  (benchmark entre GPUs: qwen3:14b/30b, qwen3.6:27b, llama3.3:70b)"
+    echo "    3) --zoo       (uso diario: gpt-oss, qwen3:8b, coder, gemma4, deepseek, embeddings)"
     echo "    4) --todo      (todo, sin confirmaciones; incluye llama3.3:70b ~43 GB)"
     echo "    0) Cancelar"
     echo
@@ -136,7 +137,8 @@ while true; do
     echo "  3) Instalar Docker + Open WebUI"
     echo "  4) Descargar modelos (submenú de modos)"
     echo "  5) Ejecutar benchmark (CSV en benchmarks/)"
-    echo "  6) Ejecutar TODO (pasos 1-5, con descarga --minimo)"
+    echo "  6) Actualizar modelos instalados (delta por tag)"
+    echo "  7) Ejecutar TODO (pasos 1-5, con descarga --minimo)"
     echo "  0) Salir"
     echo
     read -r -p "Elige una opción: " opcion
@@ -147,7 +149,8 @@ while true; do
         3) ejecutar_script 03-instalar-docker-openwebui.sh || true ;;
         4) menu_modelos ;;
         5) ejecutar_script 05-benchmark.sh || true ;;
-        6) ejecutar_todo || true ;;
+        6) ejecutar_script 06-actualizar-modelos.sh || true ;;
+        7) ejecutar_todo || true ;;
         0) echo; log_info "¡Hasta luego!"; exit 0 ;;
         *) log_error "Opción no válida." ;;
     esac

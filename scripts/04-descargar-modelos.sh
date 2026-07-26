@@ -38,13 +38,13 @@ if [[ "$(uname -s)" != "Linux" ]] || [[ -z "${BASH_VERSION:-}" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Catálogo de modelos (tags verificados contra ollama.com/library, junio 2026)
+# Catálogo de modelos (tags verificados contra ollama.com/library, julio 2026)
 # ---------------------------------------------------------------------------
 # ESCALERA: misma serie ejecutada en cada GPU para benchmarks comparables.
 ESCALERA=(
     "qwen3:14b"        # tier 0   - denso, ~9 GB  (cabe en la RTX 3080)
     "qwen3:30b"        # tier 25  - MoE 3B activos, ~19 GB
-    "qwen3:32b"        # tier 50  - denso, ~20 GB
+    "qwen3.6:27b"      # tier 50  - denso, ~17 GB (Qwen 3.6, mejor denso consumo 2026)
     "llama3.3:70b"     # tier 100 - denso, ~43 GB (descarga pesada: pide confirmación)
 )
 
@@ -53,7 +53,7 @@ ZOO=(
     "gpt-oss:20b"      # daily driver MoE, MXFP4, ~14 GB
     "qwen3:8b"         # rápido, ~5 GB
     "qwen3-coder:30b"  # coder MoE, ~19 GB
-    "qwen3-vl:8b"      # visión, ~6 GB
+    "gemma4:e4b"       # multimodal + tool calling (visión), ~6 GB - ideal para agentes
     "deepseek-r1:14b"  # razonamiento, ~9 GB
     "nomic-embed-text" # embeddings, ~274 MB
 )
@@ -77,9 +77,9 @@ Uso: ./04-descargar-modelos.sh [FLAG]
 
 Flags (elige uno):
   --escalera   Descarga la escalera de benchmark:
-               qwen3:14b, qwen3:30b, qwen3:32b, llama3.3:70b
+               qwen3:14b, qwen3:30b, qwen3.6:27b, llama3.3:70b
   --zoo        Descarga el zoo de uso diario:
-               gpt-oss:20b, qwen3:8b, qwen3-coder:30b, qwen3-vl:8b,
+               gpt-oss:20b, qwen3:8b, qwen3-coder:30b, gemma4:e4b,
                deepseek-r1:14b, nomic-embed-text
   --todo       Descarga TODO sin pedir confirmación (llama3.3:70b incluido).
   --minimo     Solo lo imprescindible para empezar:
