@@ -42,6 +42,12 @@ if [[ -z "${BASH_VERSION:-}" ]]; then
     exit 1
 fi
 
+# Dependencias mínimas: Ubuntu Desktop no incluye curl y todo el stack lo usa
+if ! command -v curl >/dev/null 2>&1; then
+    log_aviso "curl no está instalado; es necesario para todo el stack. Instalándolo..."
+    sudo apt update && sudo apt install -y curl
+fi
+
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPTS="${REPO_DIR}/scripts"
 

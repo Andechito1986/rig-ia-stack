@@ -31,6 +31,12 @@ if [[ "$(uname -s)" != "Linux" ]] || [[ -z "${BASH_VERSION:-}" ]]; then
     exit 1
 fi
 
+# Ubuntu Desktop no incluye curl; el instalador de Ollama lo necesita
+if ! command -v curl >/dev/null 2>&1; then
+    log_aviso "curl no está instalado; instalándolo..."
+    sudo apt update && sudo apt install -y curl
+fi
+
 # Directorio raíz del repositorio (un nivel por encima de scripts/)
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OVERRIDE_FUENTE="${REPO_DIR}/config/ollama-override.conf"
