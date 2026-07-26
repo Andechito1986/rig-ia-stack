@@ -71,17 +71,22 @@ fi
 # Datos de GPU para el CSV (si no hay nvidia-smi se anota y se sigue: el
 # benchmark también sirve para medir rendimiento en CPU).
 if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi >/dev/null 2>&1; then
-    GPU_INFO="$(nvidia-smi --query-gpu=name,memory.total,memory.used --format=csv,noheader,nounits | head -n1)"
+    GPU_INFO="$(nvidia-smi --query-gpu=name,memory.total,memory.used,driver_version --format=csv,noheader,nounits | head -n1)"
     GPU_NOMBRE="$(echo "${GPU_INFO}" | cut -d, -f1 | xargs)"
     VRAM_TOTAL="$(echo "${GPU_INFO}" | cut -d, -f2 | xargs)"
     VRAM_USADA="$(echo "${GPU_INFO}" | cut -d, -f3 | xargs)"
-    log_ok "GPU: ${GPU_NOMBRE} (${VRAM_USADA}/${VRAM_TOTAL} MB de VRAM en uso)"
+    DRIVER_VER="$(echo "${GPU_INFO}" | cut -d, -f4 | xargs)"
+    log_ok "GPU: ${GPU_NOMBRE} (${VRAM_USADA}/${VRAM_TOTAL} MB de VRAM en uso, driver ${DRIVER_VER})"
 else
     GPU_NOMBRE="sin-gpu"
     VRAM_TOTAL="0"
     VRAM_USADA="0"
+    DRIVER_VER="-"
     log_aviso "nvidia-smi no disponible: el benchmark correrá sobre CPU."
 fi
+
+# Versión del motor Ollama (queda registrada en el CSV como contexto)
+OLLAMA_VER="$(curl -fsS http://localhost:11434/api/version 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("version","-"))' 2>/dev/null || echo '-')"
 
 # ---------------------------------------------------------------------------
 # Lista de modelos a medir
@@ -117,7 +122,7 @@ echo
 # ---------------------------------------------------------------------------
 FECHA="$(date +%Y%m%d_%H%M%S)"
 CSV="${DIR_BENCH}/benchmark_${FECHA}.csv"
-echo "fecha,modelo,gpu,vram_total_mb,vram_usada_mb,eval_count,duracion_s,tokens_por_segundo" > "${CSV}"
+echo "fecha,modelo,gpu,vram_total_mb,vram_usada_mb,eval_count,duracion_s,tokens_por_segundo,driver,ollama" > "${CSV}"
 log_info "Resultados en: ${CSV}"
 echo
 
@@ -137,13 +142,13 @@ for modelo in "${MODELOS[@]}"; do
     # Parsear el JSON, añadir la fila al CSV e imprimir el resumen por pantalla.
     # La respuesta viaja por la variable de entorno RESPUESTA_JSON para no
     # mezclar canales con el código python.
-    RESULTADO="$(RESPUESTA_JSON="${RESPUESTA}" python3 - "${modelo}" "${GPU_NOMBRE}" "${VRAM_TOTAL}" "${VRAM_USADA}" "${CSV}" <<'PYEOF'
+    RESULTADO="$(RESPUESTA_JSON="${RESPUESTA}" python3 - "${modelo}" "${GPU_NOMBRE}" "${VRAM_TOTAL}" "${VRAM_USADA}" "${DRIVER_VER}" "${OLLAMA_VER}" "${CSV}" <<'PYEOF'
 import json
 import os
 import sys
 from datetime import datetime
 
-modelo, gpu, vram_total, vram_usada, csv_path = sys.argv[1:6]
+modelo, gpu, vram_total, vram_usada, driver, ollama, csv_path = sys.argv[1:8]
 datos = json.loads(os.environ["RESPUESTA_JSON"])
 
 eval_count = int(datos.get("eval_count", 0))
@@ -152,7 +157,7 @@ duracion_s = eval_duration_ns / 1e9
 tps = eval_count / duracion_s if duracion_s > 0 else 0.0
 fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-fila = f"{fecha},{modelo},{gpu},{vram_total},{vram_usada},{eval_count},{duracion_s:.2f},{tps:.2f}"
+fila = f"{fecha},{modelo},{gpu},{vram_total},{vram_usada},{eval_count},{duracion_s:.2f},{tps:.2f},{driver},{ollama}"
 with open(csv_path, "a", encoding="utf-8") as f:
     f.write(fila + "\n")
 

@@ -80,6 +80,9 @@ chmod +x setup.sh scripts/*.sh   # por si el bit de ejecución no se preservó
 4. **Descargar modelos** — submenú: `--minimo`, `--escalera`, `--zoo` o `--todo` (ver siguiente sección).
 5. **Benchmark** — genera un CSV en `benchmarks/` con tok/s por modelo.
 6. **Actualizar modelos** — pone al día todos los tags instalados (descarga delta; ver "Actualizar y rotar modelos").
+7. **Comparar benchmarks** — tabla antes/después entre dos CSV (p. ej. al cambiar de GPU; ver "Comparar benchmarks").
+
+> 📌 **¿Operación diaria?** Consulta la **[CHEATSHEET.md](CHEATSHEET.md)**: accesos, mantenimiento mensual y rituales paso a paso.
 
 También se puede ejecutar cada script por separado desde `scripts/`.
 
@@ -183,6 +186,10 @@ Cada ejecución crea `benchmarks/benchmark_YYYYMMDD_HHMMSS.csv` con estas column
 | `eval_count` | Tokens generados en la respuesta |
 | `duracion_s` | Duración de la generación (`eval_duration`, en segundos) |
 | `tokens_por_segundo` | `eval_count / eval_duration` — la métrica clave |
+| `driver` | Versión del driver NVIDIA en el momento de la medición |
+| `ollama` | Versión del motor Ollama en el momento de la medición |
+
+> CSVs generados antes de julio 2026 pueden no tener las columnas `driver`/`ollama`; el comparador las muestra como `-`.
 
 Cómo leerlo:
 
@@ -190,6 +197,19 @@ Cómo leerlo:
 - `tokens_por_segundo` alto = mejor. En la RTX 3080 espera cifras altas en `qwen3:14b`/`qwen3:30b` (MoE) y un desplome en `qwen3.6:27b` y `llama3.3:70b` por el offload a CPU (solo hay 10 GB de VRAM).
 - **Regla de oro**: tras cada cambio de hardware (nueva GPU, driver, etc.) vuelve a ejecutar el benchmark y conserva los CSV antiguos para comparar. Los CSV están en `.gitignore`: son datos locales de cada rig.
 - Para comparar dos GPUs, compara el `tokens_por_segundo` de cada modelo de la **escalera** (mismos 4 modelos, mismo prompt).
+
+### Comparar benchmarks (opción 7 del menú)
+
+```bash
+./scripts/07-comparar-benchmarks.sh                        # los 2 CSV más recientes
+./scripts/07-comparar-benchmarks.sh VIEJO.csv NUEVO.csv    # dos archivos concretos
+```
+
+Muestra cada modelo con sus tok/s antes y ahora, el **% de cambio** (🚀 ≥ +20 %, 🐢 ≤ −20 %) y el contexto (GPU, driver, versión de Ollama) de cada medición. Ritual al cambiar hardware:
+
+1. Conserva siempre los CSV antiguos en `benchmarks/`.
+2. Con el hardware nuevo: `./scripts/05-benchmark.sh`.
+3. `./scripts/07-comparar-benchmarks.sh` → tabla comparativa automática.
 
 ---
 
@@ -242,7 +262,8 @@ Acabas de ser añadido al grupo `docker`: **cierra y vuelve a abrir la sesión S
 ```
 rig-ia-stack/
 ├── README.md
-├── setup.sh                  # menú maestro interactivo (pasos 1-6)
+├── CHEATSHEET.md             # referencia rápida de operación (anti-olvido)
+├── setup.sh                  # menú maestro interactivo (pasos 1-7)
 ├── docker-compose.yml        # Open WebUI (puerto 3000)
 ├── config/
 │   └── ollama-override.conf  # drop-in systemd: OLLAMA_MODELS y OLLAMA_HOST
@@ -252,7 +273,8 @@ rig-ia-stack/
 │   ├── 03-instalar-docker-openwebui.sh
 │   ├── 04-descargar-modelos.sh
 │   ├── 05-benchmark.sh
-│   └── 06-actualizar-modelos.sh
+│   ├── 06-actualizar-modelos.sh
+│   └── 07-comparar-benchmarks.sh
 └── benchmarks/               # CSV de resultados (ignorados por git)
 ```
 

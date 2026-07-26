@@ -8,6 +8,7 @@
 #   4) Descarga de modelos (escalera / zoo / mínimo)
 #   5) Benchmark de generación con salida a CSV
 #   6) Actualización de modelos instalados (delta por tag)
+#   7) Comparación de dos benchmarks (CSV antiguo vs nuevo)
 #
 set -euo pipefail
 
@@ -144,7 +145,8 @@ while true; do
     echo "  4) Descargar modelos (submenú de modos)"
     echo "  5) Ejecutar benchmark (CSV en benchmarks/)"
     echo "  6) Actualizar modelos instalados (delta por tag)"
-    echo "  7) Ejecutar TODO (pasos 1-5, con descarga --minimo)"
+    echo "  7) Comparar benchmarks (2 CSV, p.ej. antes/después de una GPU)"
+    echo "  8) Ejecutar TODO (pasos 1-5, con descarga --minimo)"
     echo "  0) Salir"
     echo
     read -r -p "Elige una opción: " opcion
@@ -156,7 +158,8 @@ while true; do
         4) menu_modelos ;;
         5) ejecutar_script 05-benchmark.sh || true ;;
         6) ejecutar_script 06-actualizar-modelos.sh || true ;;
-        7) ejecutar_todo || true ;;
+        7) ejecutar_script 07-comparar-benchmarks.sh || true ;;
+        8) ejecutar_todo || true ;;
         0) echo; log_info "¡Hasta luego!"; exit 0 ;;
         *) log_error "Opción no válida." ;;
     esac
