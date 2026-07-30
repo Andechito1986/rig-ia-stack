@@ -6,10 +6,11 @@
 #   (edición por instrucción: "cambia el fondo por la bahía de Bahía Inglesa").
 #
 #   Calibrado para RTX 3080 10GB + 32GB RAM:
-#     - Modelo edición Q3_K_M (~9.8GB)  → VRAM
+#     - Modelo edición Q3_K_M (~9.8GB)  → VRAM (rápido)
+#     - Modelo edición Q4_K_M (~13GB)   → VRAM + offload RAM (máxima calidad)
 #     - Encoder Qwen2.5-VL-7B Q4 (~4.4GB) → RAM (offload)
 #     - LoRA Lightning 4/8 pasos → velocidad ×5
-#   Archivos verificados en HuggingFace (julio 2026). Total descarga: ~15GB.
+#   Archivos verificados en HuggingFace (julio 2026). Total descarga: ~28GB.
 #
 # Uso:  bash scripts/09-instalar-comfyui.sh
 # Luego: cd ~/ComfyUI && ./venv/bin/python main.py --listen 0.0.0.0 --port 8188
@@ -63,9 +64,12 @@ dl() { # url destino
   fi
 }
 
-echo "==> Descargando modelos (~15GB; con tu fibra ≈ 3-5 min)"
+echo "==> Descargando modelos (~28GB; con tu fibra ≈ 5-7 min)"
 dl "https://huggingface.co/QuantStack/Qwen-Image-Edit-2509-GGUF/resolve/main/Qwen-Image-Edit-2509-Q3_K_M.gguf" \
    "$MODELS_DIR/unet/Qwen-Image-Edit-2509-Q3_K_M.gguf"
+# Q4_K_M (~13GB): más calidad, corre en 10GB con offload a RAM — para el duelo A/B vs Q3
+dl "https://huggingface.co/QuantStack/Qwen-Image-Edit-2509-GGUF/resolve/main/Qwen-Image-Edit-2509-Q4_K_M.gguf" \
+   "$MODELS_DIR/unet/Qwen-Image-Edit-2509-Q4_K_M.gguf"
 dl "https://huggingface.co/unsloth/Qwen2.5-VL-7B-Instruct-GGUF/resolve/main/Qwen2.5-VL-7B-Instruct-Q4_0.gguf" \
    "$MODELS_DIR/text_encoders/Qwen2.5-VL-7B-Instruct-Q4_0.gguf"
 # mmproj OBLIGATORIO (sin él, error mat1/mat2); renombrado para que el loader lo encuentre
