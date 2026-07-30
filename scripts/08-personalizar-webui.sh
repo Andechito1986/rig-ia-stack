@@ -7,9 +7,11 @@
 #   • Intenta fijar qwen3:30b como modelo predeterminado
 #
 # ES COSMÉTICO: Ollama y los scripts de benchmark/actualización no se afectan.
+# Payload validado contra WebUI 0.11.0 (create/update devuelven HTTP 200).
 #
 # Requisitos:
 #   1. API key de WebUI (avatar → Configuración → Cuenta → Claves API → crear)
+#      (si no aparece la sección: Ajustes de Admin → Autenticación → Habilitar Claves API)
 #   2. export WEBUI_API_KEY="sk-..."   (o te la pedirá al ejecutar)
 # Uso:
 #   bash scripts/08-personalizar-webui.sh
@@ -53,7 +55,8 @@ upsert_model() { # id, nombre, extra_json
   q=$(urlenc "$id")
   body=$(python3 -c '
 import json,sys
-d={"id":sys.argv[1],"name":sys.argv[2],"base_model_id":sys.argv[1]}
+# Payload validado contra WebUI 0.11.0: base_model_id=null + params/meta completos
+d={"id":sys.argv[1],"name":sys.argv[2],"base_model_id":None,"params":{},"meta":{"tags":[]},"is_active":True}
 if len(sys.argv)>3 and sys.argv[3]: d.update(json.loads(sys.argv[3]))
 print(json.dumps(d))' "$id" "$name" "$extra")
   code=$(api POST "/api/v1/models/model/update?id=$q" "$body")
