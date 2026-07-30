@@ -7,7 +7,8 @@
 #   • Intenta fijar qwen3:30b como modelo predeterminado
 #
 # ES COSMÉTICO: Ollama y los scripts de benchmark/actualización no se afectan.
-# Payload validado contra WebUI 0.11.0 (create/update devuelven HTTP 200).
+# Payload validado contra WebUI 0.11.0. Re-ejecutable: ante conflicto de id
+# borra la fila y la recrea.
 #
 # Requisitos:
 #   1. API key de WebUI (avatar → Configuración → Cuenta → Claves API → crear)
@@ -61,6 +62,10 @@ if len(sys.argv)>3 and sys.argv[3]: d.update(json.loads(sys.argv[3]))
 print(json.dumps(d))' "$id" "$name" "$extra")
   code=$(api POST "/api/v1/models/model/update?id=$q" "$body")
   [[ "$code" == "200" ]] && return 0
+  code=$(api POST "/api/v1/models/create" "$body")
+  [[ "$code" == "200" ]] && return 0
+  # Conflicto: ya existe una fila con ese id → borrar y recrear
+  api DELETE "/api/v1/models/model/delete?id=$q" >/dev/null
   code=$(api POST "/api/v1/models/create" "$body")
   [[ "$code" == "200" ]]
 }
