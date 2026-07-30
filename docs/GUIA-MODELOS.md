@@ -52,7 +52,18 @@ Velocidades medidas en TU rig (benchmark 2026-07-26, RTX 3080):
 | "Recuerda esto para siempre" | Sin memoria entre chats | Memoria de WebUI (opcional) |
 | "Resume este PDF de 300 páginas" | Contexto limitado | RAG con nomic-embed-text |
 
-## 5. Criterio para futuros modelos
+## 5. Convención de nombres en el selector de WebUI
+
+El dropdown de WebUI muestra solo `nombre:tamaño`, así que renombramos a nivel de interfaz
+(Panel de administración → Configuración → Modelos → ✏️ → Nombre). Es cosmético: Ollama y los scripts no se ven afectados.
+
+- **🟢 = uso diario** (respuesta útil y fluida en la 3080): qwen3:30b (chat general), qwen3-coder:30b (código), gpt-oss:20b (agentes), gemma4:e4b (visión), deepseek-r1:14b (razonamiento), qwen3:14b y qwen3:8b (densos rápidos)
+- **🧪 = laboratorio/benchmark** (lentos por diseño): qwen3.6:27b, llama3.3:70b
+- **nomic-embed-text: oculto** del selector (toggle off) — sigue instalado para RAG
+- Predeterminado para chats nuevos: 🟢 qwen3:30b (Configuración → General → Modelo predeterminado)
+- Al fichar un modelo nuevo: mismo ritual (emoji + especialidad entre paréntesis), 30 segundos.
+
+## 6. Criterio para futuros modelos
 
 Cuando salga un modelo nuevo y te tiente instalarlo:
 1. **¿Es MoE con ≤4B parámetros activos?** → correrá fluido en la 3080. Candidato.
