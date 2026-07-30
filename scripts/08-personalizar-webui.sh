@@ -7,8 +7,8 @@
 #   • Intenta fijar qwen3:30b como modelo predeterminado
 #
 # ES COSMÉTICO: Ollama y los scripts de benchmark/actualización no se afectan.
-# Payload validado contra WebUI 0.11.0. Re-ejecutable: ante conflicto de id
-# borra la fila y la recrea.
+# Validado en campo contra WebUI 0.11.0: create/update con payload completo,
+# delete = POST con body. Re-ejecutable: ante conflicto de id borra y recrea.
 #
 # Requisitos:
 #   1. API key de WebUI (avatar → Configuración → Cuenta → Claves API → crear)
@@ -65,7 +65,8 @@ print(json.dumps(d))' "$id" "$name" "$extra")
   code=$(api POST "/api/v1/models/create" "$body")
   [[ "$code" == "200" ]] && return 0
   # Conflicto: ya existe una fila con ese id → borrar y recrear
-  api DELETE "/api/v1/models/model/delete?id=$q" >/dev/null
+  # (delete validado en WebUI 0.11.0: es POST y exige body)
+  api POST "/api/v1/models/model/delete?id=$q" "$body" >/dev/null
   code=$(api POST "/api/v1/models/create" "$body")
   [[ "$code" == "200" ]]
 }
